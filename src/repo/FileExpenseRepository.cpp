@@ -27,7 +27,7 @@ void FileExpenseRepository::load() const {
         std::string token;
 
         std::getline(ss, token, ',');
-        int id = std::stoi(trim(token));
+        std::string id = trim(token);
 
         std::getline(ss, token, ',');
         double amount = std::stod(trim(token));
@@ -81,7 +81,7 @@ void FileExpenseRepository::update(const Expense& e) {
     throw std::runtime_error("Expense not found for update.");
 }
 
-void FileExpenseRepository::remove(int id) {
+void FileExpenseRepository::remove(const std::string& id) {
     load();
     for (size_t i = 0; i < cache.size(); i++) {
         if (cache[i].getId() == id) {
@@ -93,7 +93,7 @@ void FileExpenseRepository::remove(int id) {
     throw std::runtime_error("Expense not found for delete.");
 }
 
-Expense FileExpenseRepository::findById(int id) const {
+Expense FileExpenseRepository::findById(const std::string& id) const {
     load();
     for (const auto& x : cache)
         if (x.getId() == id) return x;

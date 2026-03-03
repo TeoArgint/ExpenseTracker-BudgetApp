@@ -8,8 +8,8 @@ private:
 public:
     void add(const Expense& e) override;
     void update(const Expense& e) override;
-    void remove(int id) override;
+    void remove(const std::string& id) override;
 
-    Expense findById(int id) const override;
+    Expense findById(const std::string& id) const override;
     std::vector<Expense> getAll() const override;
 };

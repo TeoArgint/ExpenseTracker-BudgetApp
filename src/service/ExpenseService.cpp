@@ -10,7 +10,7 @@ std::string ExpenseService::monthKey(const std::string& date) {
     return date.substr(0, 7);
 }
 
-void ExpenseService::addExpense(int id, double amount, const std::string& category,
+void ExpenseService::addExpense(const std::string& id, double amount, const std::string& category,
                                 const std::string& date, const std::string& description) {
     Validators::validateId(id);
     Validators::validateAmount(amount);
@@ -21,7 +21,7 @@ void ExpenseService::addExpense(int id, double amount, const std::string& catego
     repo.add(Expense(id, amount, category, date, description));
 }
 
-void ExpenseService::updateExpense(int id, double amount, const std::string& category,
+void ExpenseService::updateExpense(const std::string& id, double amount, const std::string& category,
                                    const std::string& date, const std::string& description) {
     Validators::validateId(id);
     Validators::validateAmount(amount);
@@ -32,7 +32,7 @@ void ExpenseService::updateExpense(int id, double amount, const std::string& cat
     repo.update(Expense(id, amount, category, date, description));
 }
 
-void ExpenseService::deleteExpense(int id) {
+void ExpenseService::deleteExpense(const std::string& id) {
     Validators::validateId(id);
     repo.remove(id);
 }

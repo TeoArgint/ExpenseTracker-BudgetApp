@@ -1,10 +1,10 @@
 #include "domain/Expense.h"
 #include <utility>
 
-Expense::Expense(int id, double amount, std::string category, std::string date, std::string description)
+Expense::Expense(std::string id, double amount, std::string category, std::string date, std::string description)
     : id(id), amount(amount), category(std::move(category)), date(std::move(date)), description(std::move(description)) {}
 
-int Expense::getId() const { return id; }
+const std::string &Expense::getId() const { return id; }
 double Expense::getAmount() const { return amount; }
 const std::string& Expense::getCategory() const { return category; }
 const std::string& Expense::getDate() const { return date; }

@@ -1,12 +1,43 @@
 #include "ui/ConsoleUI.h"
 #include <iostream>
 #include <limits>
+#include "validation/Validators.h"
 
 ConsoleUI::ConsoleUI(IExpenseService& srv) : srv(srv) {}
 
 static void clearInput() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+}
+
+static int readInt(const std::string& prompt) {
+    while (true) {
+        std::cout << prompt;
+        int x;
+        if (std::cin >> x) { clearInput(); return x; }
+        clearInput();
+        std::cout << "Error: invalid integer.\n";
+    }
+}
+
+static double readDouble(const std::string& prompt) {
+    while (true) {
+        std::cout << prompt;
+        double x;
+        if (std::cin >> x) { clearInput(); return x; }
+        clearInput();
+        std::cout << "Error: invalid number.\n";
+    }
+}
+
+static std::string readLineNonEmpty(const std::string& prompt) {
+    while (true) {
+        std::cout << prompt;
+        std::string s;
+        std::getline(std::cin, s);
+        if (!s.empty()) return s;
+        std::cout << "Error: value cannot be empty.\n";
+    }
 }
 
 void ConsoleUI::printMenu() {
@@ -46,19 +77,65 @@ void ConsoleUI::run() {
             if (cmd == 0) break;
 
             if (cmd == 1) {
-                int id; double amount;
-                std::string cat, date, desc;
+                std::string id;
+                while (true) {
+                    try {
+                        id = readLineNonEmpty("id: ");
+                        Validators::validateId(id);          // <-- aici validezi imediat
+                        break;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error: " << e.what() << "\n";
+                    }
+                }
 
-                std::cout << "id: "; std::cin >> id; clearInput();
-                std::cout << "amount: "; std::cin >> amount; clearInput();
-                std::cout << "category: "; std::getline(std::cin, cat);
-                std::cout << "date (YYYY-MM-DD): "; std::getline(std::cin, date);
-                std::cout << "description: "; std::getline(std::cin, desc);
+                double amount;
+                while (true) {
+                    try {
+                        amount = readDouble("amount: ");
+                        Validators::validateAmount(amount);  // <-- imediat
+                        break;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error: " << e.what() << "\n";
+                    }
+                }
+
+                std::string cat;
+                while (true) {
+                    try {
+                        cat = readLineNonEmpty("category: ");
+                        Validators::validateCategory(cat);   // <-- imediat (dacă ai)
+                        break;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error: " << e.what() << "\n";
+                    }
+                }
+
+                std::string date;
+                while (true) {
+                    try {
+                        date = readLineNonEmpty("date (YYYY-MM-DD): ");
+                        Validators::isValidDateYYYYMMDD(date);      // <-- imediat (dacă ai)
+                        break;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error: " << e.what() << "\n";
+                    }
+                }
+
+                std::string desc;
+                while (true) {
+                    try {
+                        desc = readLineNonEmpty("description: ");
+                        Validators::validateDescription(desc); // <-- imediat (dacă ai)
+                        break;
+                    } catch (const std::exception& e) {
+                        std::cout << "Error: " << e.what() << "\n";
+                    }
+                }
 
                 srv.addExpense(id, amount, cat, date, desc);
                 std::cout << "Added.\n";
             } else if (cmd == 2) {
-                int id; double amount;
+                std::string id; double amount;
                 std::string cat, date, desc;
 
                 std::cout << "id to update: "; std::cin >> id; clearInput();
@@ -70,7 +147,7 @@ void ConsoleUI::run() {
                 srv.updateExpense(id, amount, cat, date, desc);
                 std::cout << "Updated.\n";
             } else if (cmd == 3) {
-                int id;
+                std::string id;
                 std::cout << "id to delete: "; std::cin >> id; clearInput();
                 srv.deleteExpense(id);
                 std::cout << "Deleted.\n";

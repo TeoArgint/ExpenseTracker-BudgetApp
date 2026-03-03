@@ -10,13 +10,13 @@ private:
 public:
     explicit ExpenseService(IExpenseRepository& repo);
 
-    void addExpense(int id, double amount, const std::string& category,
+    void addExpense(const std::string& id, double amount, const std::string& category,
                     const std::string& date, const std::string& description) override;
 
-    void updateExpense(int id, double amount, const std::string& category,
+    void updateExpense(const std::string& id, double amount, const std::string& category,
                        const std::string& date, const std::string& description) override;
 
-    void deleteExpense(int id) override;
+    void deleteExpense(const std::string& id) override;
 
     std::vector<Expense> getAll() const override;
 

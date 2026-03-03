@@ -8,13 +8,13 @@ class IExpenseService {
 public:
     virtual ~IExpenseService() = default;
 
-    virtual void addExpense(int id, double amount, const std::string& category,
+    virtual void addExpense(const std::string& id, double amount, const std::string& category,
                             const std::string& date, const std::string& description) = 0;
 
-    virtual void updateExpense(int id, double amount, const std::string& category,
+    virtual void updateExpense(const std::string& id, double amount, const std::string& category,
                                const std::string& date, const std::string& description) = 0;
 
-    virtual void deleteExpense(int id) = 0;
+    virtual void deleteExpense(const std::string& id) = 0;
 
     virtual std::vector<Expense> getAll() const = 0;
 

@@ -3,7 +3,7 @@
 
 class Expense {
 private:
-    int id{};
+    std::string id;
     double amount{};
     std::string category;
     std::string date;        // YYYY-MM-DD
@@ -11,9 +11,8 @@ private:
 
 public:
     Expense() = default;
-    Expense(int id, double amount, std::string category, std::string date, std::string description);
-
-    int getId() const;
+    Expense(std::string id, double amount, std::string category, std::string date, std::string description);
+    const std::string& getId() const;
     double getAmount() const;
     const std::string& getCategory() const;
     const std::string& getDate() const;
