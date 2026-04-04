@@ -2,14 +2,12 @@
 #include "repo/IExpenseRepository.h"
 
 class InMemoryExpenseRepository : public IExpenseRepository {
-private:
-    std::vector<Expense> all;
+    std::vector<Expense> data;
 
 public:
-    void add(const Expense& e) override;
-    void update(const Expense& e) override;
-    void remove(const std::string& id) override;
-
-    Expense findById(const std::string& id) const override;
+    void add(const Expense&) override;
+    void remove(int) override;
+    void update(const Expense&) override;
+    Expense find(int) const override;
     std::vector<Expense> getAll() const override;
 };

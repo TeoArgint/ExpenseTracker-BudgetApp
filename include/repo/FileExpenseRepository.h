@@ -3,20 +3,17 @@
 #include <string>
 
 class FileExpenseRepository : public IExpenseRepository {
-private:
-    std::string filename;
-    mutable std::vector<Expense> cache; // încărcat din fișier
+    std::string file;
 
-    void load() const;
-    void save() const;
+    void load(std::vector<Expense>&) const;
+    void save(const std::vector<Expense>&) const;
 
 public:
-    explicit FileExpenseRepository(std::string filename);
+    FileExpenseRepository(std::string file);
 
-    void add(const Expense& e) override;
-    void update(const Expense& e) override;
-    void remove(const std::string& id) override;
-
-    Expense findById(const std::string& id) const override;
+    void add(const Expense&) override;
+    void remove(int) override;
+    void update(const Expense&) override;
+    Expense find(int) const override;
     std::vector<Expense> getAll() const override;
 };
