@@ -1,183 +1,351 @@
 #include "ui/ConsoleUI.h"
+#include <ctime>
+#include <iomanip>
 #include <iostream>
 #include <limits>
-#include "validation/Validators.h"
 
-ConsoleUI::ConsoleUI(IExpenseService& srv) : srv(srv) {}
+ConsoleUI::ConsoleUI(IExpenseService& s) : srv(s) {}
 
-static void clearInput() {
+static void getDate(int& y, int& m) {
+    const time_t t = time(nullptr);
+    tm* now = localtime(&t);
+    y = now->tm_year + 1900;
+    m = now->tm_mon + 1;
+}
+
+void ConsoleUI::clearInput() {
     std::cin.clear();
     std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-static int readInt(const std::string& prompt) {
+int ConsoleUI::readInt(const std::string& prompt) {
+    int value;
     while (true) {
         std::cout << prompt;
-        int x;
-        if (std::cin >> x) { clearInput(); return x; }
+        if (std::cin >> value) {
+            clearInput();
+            return value;
+        }
+        std::cout << "Invalid number. Try again.\n";
         clearInput();
-        std::cout << "Error: invalid integer.\n";
     }
 }
 
-static double readDouble(const std::string& prompt) {
+double ConsoleUI::readDouble(const std::string& prompt) {
+    double value;
     while (true) {
         std::cout << prompt;
-        double x;
-        if (std::cin >> x) { clearInput(); return x; }
+        if (std::cin >> value) {
+            clearInput();
+            return value;
+        }
+        std::cout << "Invalid value. Try again.\n";
         clearInput();
-        std::cout << "Error: invalid number.\n";
     }
 }
 
-static std::string readLineNonEmpty(const std::string& prompt) {
-    while (true) {
-        std::cout << prompt;
-        std::string s;
-        std::getline(std::cin, s);
-        if (!s.empty()) return s;
-        std::cout << "Error: value cannot be empty.\n";
+std::string ConsoleUI::readToken(const std::string& prompt) {
+    std::string value;
+    std::cout << prompt;
+    std::cin >> value;
+    clearInput();
+    return value;
+}
+
+std::string ConsoleUI::readLine(const std::string& prompt) {
+    std::string value;
+    std::cout << prompt;
+    std::getline(std::cin, value);
+    return value;
+}
+
+void ConsoleUI::printMainMenu() {
+    std::cout <<
+    "\n===== MAIN MENU =====\n"
+    "1. CRUD Operations\n"
+    "2. Filters\n"
+    "3. Reports\n"
+    "4. Budget & Savings\n"
+    "5. Analytics\n"
+    "6. Export\n"
+    "0. Exit\n";
+}
+
+void ConsoleUI::printCrudMenu() {
+    std::cout <<
+    "\n--- CRUD ---\n"
+    "1. Add Expense\n"
+    "2. Update Expense\n"
+    "3. Delete Expense\n"
+    "4. View All\n"
+    "0. Back\n";
+}
+
+void ConsoleUI::printFilterMenu() {
+    std::cout <<
+    "\n--- FILTERS ---\n"
+    "1. By Category\n"
+    "2. By Date Range\n"
+    "3. By Amount Range\n"
+    "0. Back\n";
+}
+
+void ConsoleUI::printReportMenu() {
+    std::cout <<
+    "\n--- REPORTS ---\n"
+    "1. Total by Category\n"
+    "2. Total by Month\n"
+    "3. Current Budget State\n"
+    "0. Back\n";
+}
+
+void ConsoleUI::printFinanceMenu() {
+    std::cout <<
+    "\n--- BUDGET & SAVINGS ---\n"
+    "1. Change Salary\n"
+    "2. Set Automatic Monthly Savings\n"
+    "3. Add Fixed Bill\n"
+    "4. Remove Fixed Bill\n"
+    "5. Transfer to Savings Now\n"
+    "6. Show Budget State\n"
+    "7. Show Fixed Bills\n"
+    "0. Back\n";
+}
+
+void ConsoleUI::printAnalyticsMenu() {
+    std::cout <<
+    "\n--- ANALYTICS ---\n"
+    "1. Monthly Total\n"
+    "2. Yearly Total\n"
+    "3. Months to Afford\n"
+    "4. Top Categories\n"
+    "5. Graph\n"
+    "0. Back\n";
+}
+
+void ConsoleUI::printExpenses(const std::vector<Expense>& expenses) {
+    if (expenses.empty()) {
+        std::cout << "No expenses.\n";
+        return;
+    }
+
+    std::cout << std::fixed << std::setprecision(2);
+    for (const auto& expense : expenses) {
+        std::cout << expense.getId() << " | "
+                  << expense.getAmount() << " | "
+                  << expense.getCategory() << " | "
+                  << expense.getDate() << " | "
+                  << expense.getDescription() << "\n";
     }
 }
 
-void ConsoleUI::printMenu() {
-    std::cout << "\n=== Expense Tracker ===\n"
-              << "1. Add expense\n"
-              << "2. Update expense\n"
-              << "3. Delete expense\n"
-              << "4. List all\n"
-              << "5. Filter by category\n"
-              << "6. Filter by date range\n"
-              << "7. Filter by amount range\n"
-              << "8. Report: total by category\n"
-              << "9. Report: total by month\n"
-              << "0. Exit\n";
+void ConsoleUI::printState() const {
+    const auto state = srv.getState();
+    std::cout << std::fixed << std::setprecision(2);
+    std::cout << "Tracked month: " << state.getYear() << "-" << std::setw(2) << std::setfill('0')
+              << state.getMonth() << std::setfill(' ') << "\n";
+    std::cout << "Salary: " << state.getSalary() << "\n";
+    std::cout << "Available now: " << state.getAvailable() << "\n";
+    std::cout << "Savings balance: " << state.getSavings() << "\n";
+    std::cout << "Automatic monthly savings: " << state.getMonthlySavingsContribution() << "\n";
+    std::cout << "Transferred to savings this month: " << state.getTransferredToSavingsThisMonth() << "\n";
+    std::cout << "Fixed bills total: " << state.getTotalFixedBills() << "\n";
+    std::cout << "Spent this month: " << srv.totalSpentInMonth(state.getYear(), state.getMonth()) << "\n";
 }
 
-void ConsoleUI::printExpenses(const std::vector<Expense>& v) {
-    if (v.empty()) { std::cout << "(no items)\n"; return; }
-    for (const auto& e : v) {
-        std::cout << "ID=" << e.getId()
-                  << " | " << e.getAmount()
-                  << " | " << e.getCategory()
-                  << " | " << e.getDate()
-                  << " | " << e.getDescription() << "\n";
+void ConsoleUI::printFixedBills() const {
+    const auto& bills = srv.getState().getFixedBills();
+    if (bills.empty()) {
+        std::cout << "No fixed bills configured.\n";
+        return;
+    }
+
+    std::cout << std::fixed << std::setprecision(2);
+    for (const auto& [name, amount] : bills) {
+        std::cout << "- " << name << ": " << amount << "\n";
     }
 }
 
 void ConsoleUI::run() {
+    int year;
+    int month;
+    getDate(year, month);
+
+    const auto state = srv.getState();
+    if (state.getYear() == 0) {
+        std::cout << "Welcome! Let's configure your monthly budget.\n";
+        const double salary = readDouble("Enter your initial monthly salary: ");
+        srv.initializeIfNeeded(year, month, salary);
+        const double monthlySavings = readDouble("Enter automatic monthly savings amount (0 if none): ");
+        srv.setMonthlySavingsContribution(monthlySavings);
+    } else {
+        srv.initializeIfNeeded(year, month, state.getSalary());
+    }
+
+    std::cout << "\nBudget loaded for " << year << "-" << std::setw(2) << std::setfill('0')
+              << month << std::setfill(' ') << ".\n";
+
     while (true) {
-        printMenu();
-        std::cout << "Choose: ";
-        int cmd;
-        if (!(std::cin >> cmd)) { clearInput(); continue; }
-        clearInput();
+        printMainMenu();
+        const int opt = readInt("Choose option: ");
+
+        if (opt == 0) {
+            break;
+        }
 
         try {
-            if (cmd == 0) break;
-
-            if (cmd == 1) {
-                std::string id;
+            if (opt == 1) {
                 while (true) {
-                    try {
-                        id = readLineNonEmpty("id: ");
-                        Validators::validateId(id);          // <-- aici validezi imediat
+                    printCrudMenu();
+                    const int c = readInt("Choose option: ");
+                    if (c == 0) {
                         break;
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
+                    }
+
+                    if (c == 1) {
+                        const int id = readInt("Enter id: ");
+                        const double amount = readDouble("Enter amount: ");
+                        const std::string category = readLine("Enter category: ");
+                        const std::string date = readToken("Enter date (YYYY-MM-DD): ");
+                        const std::string description = readLine("Enter description: ");
+                        srv.addExpense(id, amount, category, date, description);
+                        std::cout << "Expense added.\n";
+                    } else if (c == 2) {
+                        const int id = readInt("Enter id to update: ");
+                        const double amount = readDouble("Enter new amount: ");
+                        const std::string category = readLine("Enter new category: ");
+                        const std::string date = readToken("Enter new date (YYYY-MM-DD): ");
+                        const std::string description = readLine("Enter new description: ");
+                        srv.updateExpense(id, amount, category, date, description);
+                        std::cout << "Expense updated.\n";
+                    } else if (c == 3) {
+                        const int id = readInt("Enter id to delete: ");
+                        srv.deleteExpense(id);
+                        std::cout << "Expense deleted.\n";
+                    } else if (c == 4) {
+                        printExpenses(srv.getAll());
                     }
                 }
-
-                double amount;
+            } else if (opt == 2) {
                 while (true) {
-                    try {
-                        amount = readDouble("amount: ");
-                        Validators::validateAmount(amount);  // <-- imediat
+                    printFilterMenu();
+                    const int c = readInt("Choose option: ");
+                    if (c == 0) {
                         break;
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
+                    }
+
+                    if (c == 1) {
+                        const std::string category = readLine("Enter category: ");
+                        printExpenses(srv.filterByCategory(category));
+                    } else if (c == 2) {
+                        const std::string startDate = readToken("Enter start date (YYYY-MM-DD): ");
+                        const std::string endDate = readToken("Enter end date (YYYY-MM-DD): ");
+                        printExpenses(srv.filterByDateRange(startDate, endDate));
+                    } else if (c == 3) {
+                        const double minAmount = readDouble("Enter min amount: ");
+                        const double maxAmount = readDouble("Enter max amount: ");
+                        printExpenses(srv.filterByAmountRange(minAmount, maxAmount));
                     }
                 }
-
-                std::string cat;
+            } else if (opt == 3) {
                 while (true) {
-                    try {
-                        cat = readLineNonEmpty("category: ");
-                        Validators::validateCategory(cat);   // <-- imediat (dacă ai)
+                    printReportMenu();
+                    const int c = readInt("Choose option: ");
+                    if (c == 0) {
                         break;
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
+                    }
+
+                    if (c == 1) {
+                        for (const auto& [category, total] : srv.totalByCategory()) {
+                            std::cout << category << " " << total << "\n";
+                        }
+                    } else if (c == 2) {
+                        for (const auto& [monthKey, total] : srv.totalByMonth()) {
+                            std::cout << monthKey << " " << total << "\n";
+                        }
+                    } else if (c == 3) {
+                        printState();
                     }
                 }
-
-                std::string date;
+            } else if (opt == 4) {
                 while (true) {
-                    try {
-                        date = readLineNonEmpty("date (YYYY-MM-DD): ");
-                        Validators::isValidDateYYYYMMDD(date);      // <-- imediat (dacă ai)
+                    printFinanceMenu();
+                    const int c = readInt("Choose option: ");
+                    if (c == 0) {
                         break;
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
+                    }
+
+                    if (c == 1) {
+                        const double salary = readDouble("Enter new salary: ");
+                        srv.setMonthlySalary(salary);
+                        std::cout << "Salary updated.\n";
+                    } else if (c == 2) {
+                        const double amount = readDouble("Enter automatic monthly savings amount: ");
+                        srv.setMonthlySavingsContribution(amount);
+                        std::cout << "Automatic savings updated.\n";
+                    } else if (c == 3) {
+                        const std::string name = readLine("Enter fixed bill name: ");
+                        const double amount = readDouble("Enter fixed bill amount: ");
+                        srv.addFixedBill(name, amount);
+                        std::cout << "Fixed bill saved.\n";
+                    } else if (c == 4) {
+                        const std::string name = readLine("Enter fixed bill name to remove: ");
+                        srv.removeFixedBill(name);
+                        std::cout << "Fixed bill removed.\n";
+                    } else if (c == 5) {
+                        const double amount = readDouble("Enter amount to transfer to savings now: ");
+                        srv.transferToSavings(amount);
+                        std::cout << "Transfer completed.\n";
+                    } else if (c == 6) {
+                        printState();
+                    } else if (c == 7) {
+                        printFixedBills();
                     }
                 }
-
-                std::string desc;
+            } else if (opt == 5) {
                 while (true) {
-                    try {
-                        desc = readLineNonEmpty("description: ");
-                        Validators::validateDescription(desc); // <-- imediat (dacă ai)
+                    printAnalyticsMenu();
+                    const int c = readInt("Choose option: ");
+                    if (c == 0) {
                         break;
-                    } catch (const std::exception& e) {
-                        std::cout << "Error: " << e.what() << "\n";
+                    }
+
+                    if (c == 1) {
+                        const int selectedYear = readInt("Enter year: ");
+                        const int selectedMonth = readInt("Enter month: ");
+                        std::cout << srv.totalSpentInMonth(selectedYear, selectedMonth) << "\n";
+                    } else if (c == 2) {
+                        const int selectedYear = readInt("Enter year: ");
+                        std::cout << srv.totalSpentInYear(selectedYear) << "\n";
+                    } else if (c == 3) {
+                        const double target = readDouble("Enter target amount: ");
+                        const int monthsToTarget = srv.monthsToAfford(target);
+                        if (monthsToTarget < 0) {
+                            std::cout << "Target cannot be reached with the current monthly setup.\n";
+                        } else {
+                            std::cout << "Estimated months needed: " << monthsToTarget << "\n";
+                        }
+                    } else if (c == 4) {
+                        for (const auto& [category, total] : srv.topCategories()) {
+                            std::cout << category << " " << total << "\n";
+                        }
+                    } else if (c == 5) {
+                        for (const auto& [category, total] : srv.graphData()) {
+                            std::cout << category << " | ";
+                            for (int i = 0; i < static_cast<int>(total / 10); i++) {
+                                std::cout << "#";
+                            }
+                            std::cout << "\n";
+                        }
                     }
                 }
-
-                srv.addExpense(id, amount, cat, date, desc);
-                std::cout << "Added.\n";
-            } else if (cmd == 2) {
-                std::string id; double amount;
-                std::string cat, date, desc;
-
-                std::cout << "id to update: "; std::cin >> id; clearInput();
-                std::cout << "new amount: "; std::cin >> amount; clearInput();
-                std::cout << "new category: "; std::getline(std::cin, cat);
-                std::cout << "new date (YYYY-MM-DD): "; std::getline(std::cin, date);
-                std::cout << "new description: "; std::getline(std::cin, desc);
-
-                srv.updateExpense(id, amount, cat, date, desc);
-                std::cout << "Updated.\n";
-            } else if (cmd == 3) {
-                std::string id;
-                std::cout << "id to delete: "; std::cin >> id; clearInput();
-                srv.deleteExpense(id);
-                std::cout << "Deleted.\n";
-            } else if (cmd == 4) {
-                printExpenses(srv.getAll());
-            } else if (cmd == 5) {
-                std::string cat;
-                std::cout << "category: "; std::getline(std::cin, cat);
-                printExpenses(srv.filterByCategory(cat));
-            } else if (cmd == 6) {
-                std::string start, end;
-                std::cout << "start date (YYYY-MM-DD): "; std::getline(std::cin, start);
-                std::cout << "end date (YYYY-MM-DD): "; std::getline(std::cin, end);
-                printExpenses(srv.filterByDateRange(start, end));
-            } else if (cmd == 7) {
-                double minA, maxA;
-                std::cout << "min amount: "; std::cin >> minA; clearInput();
-                std::cout << "max amount: "; std::cin >> maxA; clearInput();
-                printExpenses(srv.filterByAmountRange(minA, maxA));
-            } else if (cmd == 8) {
-                auto m = srv.totalByCategory();
-                for (const auto& [cat, sum] : m) std::cout << cat << " -> " << sum << "\n";
-            } else if (cmd == 9) {
-                auto m = srv.totalByMonth();
-                for (const auto& [month, sum] : m) std::cout << month << " -> " << sum << "\n";
-            } else {
-                std::cout << "Unknown command.\n";
+            } else if (opt == 6) {
+                const std::string filename = readToken("Enter filename: ");
+                srv.exportCSV(filename);
+                std::cout << "Export completed.\n";
             }
-        } catch (const std::exception& ex) {
-            std::cout << "Error: " << ex.what() << "\n";
+        } catch (const std::exception& e) {
+            std::cout << "ERROR: " << e.what() << "\n";
         }
     }
 }
