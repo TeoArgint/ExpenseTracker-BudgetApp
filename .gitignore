@@ -1,7 +1,6 @@
-cmake-build-*/
+cmake-build/
 build/
+/app
 .idea/
-.DS_Store
-*.o
-*.out
-*.log
+data/budget_state.txt
+data/expense.csv
