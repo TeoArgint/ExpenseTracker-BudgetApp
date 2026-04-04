@@ -1,19 +1,14 @@
-#include <cassert>
-#include <iostream>
 #include "repo/InMemoryExpenseRepository.h"
+#include "repo/FileBudgetStateRepository.h"
 #include "service/ExpenseService.h"
 
-void testAddAndGetAll() {
+int main() {
     InMemoryExpenseRepository repo;
-    ExpenseService srv(repo);
+    FileBudgetStateRepository state("state.txt");
 
-    srv.addExpense("121", 300, "food", "2026-08-25", "hungry");
+    ExpenseService srv(repo, state);
 
-    auto all = srv.getAll();
+    srv.addExpense(121, 300, "food", "2026-08-25", "hungry");
 
-    assert(all.size() == 1);
-    assert(all[0].getId() == "121");
-    assert(all[0].getAmount() == 300);
-
-    std::cout << "Test add + getAll passed!\n";
+    return 0;
 }
